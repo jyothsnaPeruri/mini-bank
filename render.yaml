@@ -1,0 +1,25 @@
+# Render Blueprint - deploys the Spring Boot API on Render's free plan.
+# The database is a free Neon PostgreSQL (Render's free database expires after 30 days).
+services:
+  - type: web
+    name: minibank-api
+    runtime: docker
+    rootDir: backend
+    plan: free
+    region: singapore
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
