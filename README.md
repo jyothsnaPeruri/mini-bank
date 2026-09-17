@@ -167,4 +167,4 @@ cd frontend && npm run lint && npm run build
 
 ---
 
-Built by **Jyothsna Peruri** · [LinkedIn](https://www.linkedin.com/in/jyothsnaperuri/) · [Portfolio](https://github.com/jyothsnaPeruri)
+Built by **Jyothsna Peruri** · [LinkedIn](https://www.linkedin.com/in/jyothsna-jo-peruri/) · [Portfolio](https://jyothsnaperuri.github.io/Jyothsna-portfolio/)
