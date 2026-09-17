@@ -2,7 +2,7 @@
 
 A full-stack demo banking app: customers open accounts, move money between them and pay other customers, and an admin can freeze accounts. Every balance change goes through a proper ledger, and transfers are safe against double-clicks and concurrent requests.
 
-**Live demo:** _coming soon_ · click **Try the demo account** to sign in with sample data, no sign-up needed.
+**Live demo:** https://jyothsna-mini-bank.vercel.app · click **Try the demo account** to sign in with sample data, no sign-up needed.
 
 > This is a portfolio project, not a real bank. No real money is involved.
 
