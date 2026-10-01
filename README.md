@@ -69,6 +69,54 @@ Balances are never changed silently. Every movement writes an append-only `ledge
 - Login gives the same error for a wrong email or a wrong password.
 - All errors use RFC 9457 `problem+json` with a stable `code` field, and validation errors list each invalid field.
 
+## AI assistant access (MCP)
+
+Mini Bank is also an **MCP server**: any AI assistant that speaks the [Model Context Protocol](https://modelcontextprotocol.io)
+can act for a signed-in customer through six tools at `/mcp`.
+
+| Tool | Does | Moves money |
+| --- | --- | --- |
+| `list_accounts` | The customer's accounts and balances | No |
+| `get_account` | One account | No |
+| `recent_transactions` | Latest transactions, optionally filtered | No |
+| `find_payee` | Who owns an account number (name masked: "Alex C.") | No |
+| `prepare_transfer` | Checks a transfer and returns a **preview and a confirmation code** | **No** |
+| `confirm_transfer` | Sends a prepared transfer using its code | Yes |
+
+**Safety model — what's different when the caller is a model:**
+
+- **Two-step transfers.** No single tool call moves money. `prepare_transfer` runs every check the transfer will run
+  (ownership, $10,000 limit, balance, frozen accounts, same-account) and returns a preview; only `confirm_transfer`
+  with that code moves money. That gives the assistant a natural point to show the customer exactly what will happen
+  and wait for a yes — and a model that misreads an instruction can, at worst, produce a preview.
+- **Identity comes from the token, never from arguments.** Spring Security verifies the JWT before the request reaches
+  the MCP layer; a context extractor copies the verified user id into the MCP request context, and every tool reads it
+  from there. No tool takes a user id, so a client can't ask to act as someone else.
+- **Codes are useless to anyone else.** Bound to the customer who prepared them, single-purpose, five-minute expiry,
+  at most five open per customer.
+- **Confirming twice pays once.** The code doubles as the transfer's idempotency key, so a retried or repeated confirm
+  replays the original transfer through the existing duplicate protection.
+- **Same rules as the REST API.** The tools delegate to `AccountService` and `TransferService` — the locking, ledger and
+  limits are the existing, tested code, not a copy.
+- **Hints for clients.** Read-only tools carry `readOnlyHint`; `confirm_transfer` carries `destructiveHint`, which
+  MCP clients use to require their own user approval before calling it.
+
+Built with Spring AI 2.0.1 (`@McpTool`) on the official MCP Java SDK 2.0, stateless Streamable HTTP.
+
+**Try it with the MCP Inspector:**
+
+```bash
+TOKEN=$(curl -s -X POST https://minibank-api-7cno.onrender.com/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"demo@minibank.dev","password":"Demo@1234"}' | jq -r .token)
+
+npx @modelcontextprotocol/inspector --cli https://minibank-api-7cno.onrender.com/mcp \
+  --transport http --header "Authorization: Bearer $TOKEN" --method tools/list
+```
+
+Next step for production: the MCP authorization spec's OAuth 2.1 flow (protected-resource metadata, dynamic client
+registration) so assistants obtain tokens themselves instead of being handed one.
+
 ## Screenshots
 
 | Sign in | Transaction history |
